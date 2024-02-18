@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Meeting Analyzer",
+  "version": "0.1",
+  "author": "First Last",
+  "description": "A description about your Chrome Extension...",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://meet.google.com/*"
+      ],
+      "js": [
+        "./src/content.js"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "./assets/logo-color.png",
+    "24": "./assets/logo-color.png",
+    "32": "./assets/logo-color.png",
+    "48": "./assets/logo-color.png",
+    "96": "./assets/logo-color.png",
+    "128": "./assets/logo-color.png"
+  },
+  "background": {
+    "service_worker": "./src/background.js"
+  },
+  "action": {
+    "default_icon": "./assets/logo-color.png",
+    "default_popup": "./src/index.html",
+    "default_title": "A tooltip popup description when you hover over the Chrome Extension icon."
+  }
+}
