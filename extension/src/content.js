@@ -30,6 +30,7 @@ const renderDashboard = () => {
 const updateSubtitles = ({name, text}) =>{
     // console.log(name, text);
     text = text.trim();
+    text = text.toLowerCase();
     if(text[text.length-1] === "."){
         text = text.slice(0, text.length-1);
     }
@@ -60,7 +61,7 @@ const subtitlesHandler = () =>{
     subtitlesContainer.style.height = 0;
 
     const subtitles = subtitlesContainer.children[0].children[0];
-    console.log('Targeted subtitles are.....', subtitles);
+    // console.log('Targeted subtitles are.....', subtitles);
 
 
     // Mutation Observer to observe the changes in the subtitles
@@ -98,7 +99,7 @@ const interval  = setInterval(() => {
         const parent = foundDiv.parentElement;
         // getting the first child of the parent element
         subtitlesButton = parent.children[0];
-        console.log(subtitlesButton);
+        // console.log(subtitlesButton);
         subtitlesButton.click();
         subtitlesHandler();
     }
