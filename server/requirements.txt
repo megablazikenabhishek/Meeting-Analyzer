@@ -3,3 +3,4 @@ transformers
 torch 
 torchvision 
 torchaudio
+scikit-learn
