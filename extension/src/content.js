@@ -6,27 +6,6 @@ let subtitlesButton = null
 let subtitlesContent = []
 
 // Global Functions
-const renderDashboard = () => {
-    const dashboard = document.createElement('div');
-    dashboard.className = 'dashboard';
-    dashboard.style.position = 'absolute';
-    dashboard.style.top = '0'
-    dashboard.style.zIndex = '9999';
-    dashboard.style.backgroundColor = 'white';
-    dashboard.style.padding = '20px';
-    dashboard.style.border = '1px solid #000';
-    dashboard.style.borderRadius = '5px';
-    dashboard.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
-    dashboard.style.maxHeight = '400px';
-    dashboard.style.overflowY = 'scroll';
-    dashboard.style.maxWidth = '500px'; 
-    dashboard.innerHTML = `
-        <h1>Dashboard</h1>
-        <p>Subtitle content goes here...</p>
-    `;
-    document.querySelector('body').appendChild(dashboard);
-    console.log("Injected dashboard!!")
-}
 const updateSubtitles = ({name, text}) =>{
     // console.log(name, text);
     text = text.trim();
@@ -34,6 +13,8 @@ const updateSubtitles = ({name, text}) =>{
     if(text[text.length-1] === "."){
         text = text.slice(0, text.length-1);
     }
+    // remove all the non alphanumeric characters
+    text = text.replace(/[^a-zA-Z0-9 ]/g, "");
 
     for(let i=0; i<subtitlesContent.length; i++){
         if(subtitlesContent[i].name === name && text.startsWith(subtitlesContent[i].text)){
@@ -43,15 +24,21 @@ const updateSubtitles = ({name, text}) =>{
     }
     subtitlesContent.push({name, text});
 }
-const updateDashboard = () =>{
-    const dashboard = document.querySelector('.dashboard');
+const updateDashboard = () => {
+    const dashboard = document.querySelector('.captions');
     dashboard.innerHTML = `
-        <h1>Dashboard</h1>
+        <h1>Captions</h1>
         <ul>
             ${subtitlesContent.map(subtitle => `<li><strong>${subtitle.name}</strong>: ${subtitle.text}</li>`).join('')}
         </ul>
+        <div style="text-align:center;">
+            <button class="sec-button">Clean Captions</button>
+            <button class="sec-button">Download Captions</button>
+        </div>
     `;
+    document.querySelector('.dashboard').scrollTop = dashboard.scrollHeight;
 }
+
 const subtitlesHandler = () =>{
     console.log("Starting with subtitles...")
     const subtitlesSettings = document.evaluate('//*[contains(text(), "Captions settings")]', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE).snapshotItem(0);
@@ -83,13 +70,25 @@ const subtitlesHandler = () =>{
             }
             updateSubtitles({name, text})
         }
-        // console.log(subtitlesContent);
+
+        // checking if any text is prefix of another text and removing the prefix
+        for(let i=0; i<subtitlesContent.length; i++){
+            for(let j=0; j<subtitlesContent.length; j++){
+                if(i!==j && subtitlesContent[i].text.startsWith(subtitlesContent[j].text)){
+                    subtitlesContent[j].text = subtitlesContent[i].text;
+                }
+            }
+        }
+        // removing the duplicate subtitles
+        subtitlesContent = subtitlesContent.filter((subtitle, index) => {
+            return subtitlesContent.findIndex(sub => sub.text === subtitle.text) === index;
+        })
+        
+        console.log(subtitlesContent);
         updateDashboard()
     });
     observer.observe(subtitles, config);
 }
-
-renderDashboard();
 
 // Main Logic to start the subtitles
 const interval  = setInterval(() => {

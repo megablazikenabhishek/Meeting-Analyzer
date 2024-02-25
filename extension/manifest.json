@@ -11,7 +11,12 @@
         "https://meet.google.com/*"
       ],
       "js": [
-        "./src/content.js"
+        "./src/content.js",
+        "./src/dashboard.js",
+        "./src/dashboard_script.js"
+      ],
+      "css": [
+        "./src/style.css"
       ]
     }
   ],
