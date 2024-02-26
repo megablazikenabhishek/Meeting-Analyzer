@@ -7,6 +7,7 @@ model = AutoModelForSeq2SeqLM.from_pretrained("knkarthick/MEETING_SUMMARY")
 
 # importing required files
 from utils.cleanData import cleanData
+from utils.generatePDF import TranscriptPDF
 
 # intializing app
 app = Flask(__name__)
@@ -43,15 +44,20 @@ def summary():
 		return {'sucess': False, 'message': str(e)}
 
 @app.route('/downloadTranscript')
-def downloadFile ():
-    try:
+def download_transcript():
+	try:
 		req = request.get_json()
 		data = req['data']
 
 		# cleaning data
 		result = cleanData(data)
-		print(result)
-		return {'sucess': True, 'data': result}
+		
+		path = './file.pdf'
+		t = TranscriptPDF()
+		t.draw("This is your Transcript", result)
+		t.save(path)
+
+		return send_file(path)
 	except Exception as e:
 		return {'sucess': False, 'message': str(e)}
 
