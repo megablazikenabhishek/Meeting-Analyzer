@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 
 # for summarization
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -39,6 +39,19 @@ def summary():
 		summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
 		return {'sucess': True, 'summary': summary}
+	except Exception as e:
+		return {'sucess': False, 'message': str(e)}
+
+@app.route('/downloadTranscript')
+def downloadFile ():
+    try:
+		req = request.get_json()
+		data = req['data']
+
+		# cleaning data
+		result = cleanData(data)
+		print(result)
+		return {'sucess': True, 'data': result}
 	except Exception as e:
 		return {'sucess': False, 'message': str(e)}
 
