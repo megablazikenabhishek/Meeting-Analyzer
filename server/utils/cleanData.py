@@ -35,7 +35,8 @@ def cleanData(data):
             similarity = getSimilarity(text1, text2[:len(text1)])
 
             # print(f"{text1} ||| {text2} --> {similarity}")
-            if similarity > 80:
+            print(f"{similarity}")
+            if similarity >= 97:
                 data[i]['text'] = text2
     
     # adding only unique data to results

@@ -1,4 +1,5 @@
 from flask import Flask, request, send_file
+from flask_cors import CORS
 
 # for summarization
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -11,6 +12,7 @@ from utils.generatePDF import TranscriptPDF
 
 # intializing app
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/", methods=['GET'])
 def home():
@@ -43,7 +45,7 @@ def summary():
 	except Exception as e:
 		return {'sucess': False, 'message': str(e)}
 
-@app.route('/downloadTranscript')
+@app.route('/downloadTranscript', methods=['GET', 'POST'])
 def download_transcript():
 	try:
 		req = request.get_json()
