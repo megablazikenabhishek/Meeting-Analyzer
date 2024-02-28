@@ -1,14 +1,10 @@
 from flask import Flask, request, send_file
 from flask_cors import CORS
 
-# for summarization
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-tokenizer = AutoTokenizer.from_pretrained("knkarthick/MEETING_SUMMARY", model_max_length=5000)
-model = AutoModelForSeq2SeqLM.from_pretrained("knkarthick/MEETING_SUMMARY")
-
 # importing required files
 from utils.cleanData import cleanData
-from utils.generatePDF import TranscriptPDF
+from utils.generatePDF import TranscriptPDF, SummaryPDF
+from utils.generateSummary import generateSummary
 
 # intializing app
 app = Flask(__name__)
@@ -35,13 +31,18 @@ def clean_data():
 def summary():
 	try:
 		req = request.get_json()
-		text = req['text']
+		data = req['data']
 		
-		inputs = tokenizer(text, return_tensors="pt", max_length=5000, truncation=True)
-		summary_ids = model.generate(inputs["input_ids"], max_length=500, min_length=250, length_penalty=0.5, num_beams=4, early_stopping=False)
-		summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+		# for summarization
+		text = "\n".join([f"{i['name']} : {i['text']}" for i in data])
+		summary_text = generateSummary(text)
 
-		return {'sucess': True, 'summary': summary}
+		path = './file.pdf'
+		s = SummaryPDF()
+		s.draw("This is your Summary", summary_text)
+		s.save(path)
+
+		return send_file(path)
 	except Exception as e:
 		return {'sucess': False, 'message': str(e)}
 
@@ -52,11 +53,11 @@ def download_transcript():
 		data = req['data']
 
 		# cleaning data
-		result = cleanData(data)
+		# result = cleanData(data)
 		
 		path = './file.pdf'
 		t = TranscriptPDF()
-		t.draw("This is your Transcript", result)
+		t.draw("This is your Transcript", data)
 		t.save(path)
 
 		return send_file(path)
