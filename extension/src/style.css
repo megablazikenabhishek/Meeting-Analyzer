@@ -39,6 +39,9 @@
     width: 110px;
     margin: 0 auto;
 }
+.pause-button {
+    background-color: red;
+}
 .start-button {
     background-color: green;
 }

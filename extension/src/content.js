@@ -4,39 +4,144 @@
 // Global Vairables
 let subtitlesButton = null
 let subtitlesContent = []
+let ispaused = false;
+const backendUrl = "https://ideal-dollop-wqr5j7r795jf9x7w-5000.app.github.dev";
 
 // Global Functions
-const updateSubtitles = ({name, text}) =>{
-    // console.log(name, text);
-    text = text.trim();
-    text = text.toLowerCase();
-    if(text[text.length-1] === "."){
-        text = text.slice(0, text.length-1);
-    }
-    // remove all the non alphanumeric characters
-    text = text.replace(/[^a-zA-Z0-9 ]/g, "");
-
+const updateSubtitles = ({oldText, name, text}) =>{
     for(let i=0; i<subtitlesContent.length; i++){
-        if(subtitlesContent[i].name === name && text.startsWith(subtitlesContent[i].text)){
+        if(subtitlesContent[i].name === name && subtitlesContent[i].text === oldText){
             subtitlesContent[i].text = text;
-            return;
         }
     }
-    subtitlesContent.push({name, text});
+    // console.log(subtitlesContent);
+}
+const MergeSubtitles = () => {
+    let subtitles_array = JSON.parse(JSON.stringify(subtitlesContent));
+    let result = []
+    for(let i=0; i<subtitles_array.length; i++){
+        if(subtitles_array[i].text === "")
+            continue;
+
+        let curr_name = subtitles_array[i].name;
+        let curr_text = subtitles_array[i].text;
+
+        for(let j=i+1; j<subtitles_array.length; j++){
+            if(subtitles_array[j].name === curr_name){
+                curr_text += " " + subtitles_array[j].text;
+                curr_text = curr_text.trim();
+                subtitles_array[j].text = "";
+                if(curr_text[curr_text.length-1] === "."){
+                    break;
+                }
+            }
+        }
+        result.push({name: curr_name, text: curr_text});
+    }
+    return result;
 }
 const updateDashboard = () => {
+    // Merging the subtitles
+
+    const result = MergeSubtitles();
+
     const dashboard = document.querySelector('.captions');
     dashboard.innerHTML = `
         <h1>Captions</h1>
         <ul>
-            ${subtitlesContent.map(subtitle => `<li><strong>${subtitle.name}</strong>: ${subtitle.text}</li>`).join('')}
+            ${result.map(subtitle => `<li><strong>${subtitle.name}</strong>: ${subtitle.text}</li>`).join('')}
         </ul>
         <div style="text-align:center;">
-            <button class="sec-button">Clean Captions</button>
-            <button class="sec-button">Download Captions</button>
+            <button class="sec-button pause-button">Pause</button>
+            <button class="sec-button download-button">Download</button>
+            <button class="sec-button summary-button">Summary</button>
         </div>
     `;
+    // auto scroll to the bottom of the dashboard
     document.querySelector('.dashboard').scrollTop = dashboard.scrollHeight;
+
+    // Adding event listeners to pause and download buttons
+    document.querySelector('.pause-button').addEventListener('click', (e) => {
+        if(e.target.textContent === "Pause"){
+            e.target.textContent = "Play";
+            e.target.style.backgroundColor = "#ffcc00";
+            ispaused = true;
+            subtitlesButton.click();
+        }else{
+            e.target.textContent = "Pause";
+            e.target.style.backgroundColor = "red";
+            ispaused = false;
+            subtitlesButton.click();
+        }
+    }); 
+    
+    document.querySelector('.download-button').addEventListener('click', async(e) => {
+        try {
+            const result = MergeSubtitles();
+            const data = await fetch(`${backendUrl}/downloadTranscript`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({data: result})
+            });
+            const blob = await data.blob();
+
+            // Create a temporary URL for the Blob object
+            const url = URL.createObjectURL(blob);
+            
+            // Create a link element with the download attribute
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            
+            // Simulate a click on the link to trigger the download
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.removeChild(link);
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    document.querySelector('.summary-button').addEventListener('click', async(e) => {
+        try {
+            const result = MergeSubtitles();
+            const data = await fetch(`${backendUrl}/generateSummary`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({data: result})
+            });
+            const blob = await data.blob();
+
+            // Create a temporary URL for the Blob object
+            const url = URL.createObjectURL(blob);
+            
+            // Create a link element with the download attribute
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            
+            // Simulate a click on the link to trigger the download
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.removeChild(link);
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.log(error);
+        }
+    });
 }
 
 const subtitlesHandler = () =>{
@@ -52,39 +157,30 @@ const subtitlesHandler = () =>{
 
 
     // Mutation Observer to observe the changes in the subtitles
-    const config = { characterData: true, attributes: false, childList: false, subtree: true };
+    const config = { characterData: true, attributes: false, childList: false, subtree: true, characterDataOldValue : true };
     const observer = new MutationObserver((mutationsList, observer) => {
-        console.log('Subtitles changed...');
-        for(let i=0; i<subtitles.children.length; i++){
-            const persons = subtitles.children[i];
-            // console.log(persons);
-            
-            // capturing the name of the person
-            const name = persons.children[0].children[1].textContent;
-            const textContainer = persons.children[1];
-
-            // capturing the text of the person
-            let text = "";
-            for(let j=0; j<textContainer.children[0].children.length; j++){
-                text+= String(textContainer.children[0].children[j].textContent);
-            }
-            updateSubtitles({name, text})
+        if(ispaused){
+            return;
         }
+        console.log('Subtitles changed...');
+        console.log(mutationsList);
+        for(let mutation of mutationsList){
+            if(mutation.type === 'characterData'){
+                const name = mutation.target.parentElement.parentElement.parentElement.parentElement.children[0].children[1].textContent.trim();
+                const text = mutation.target.textContent.trim();
+                const oldText = mutation.oldValue.trim();
 
-        // checking if any text is prefix of another text and removing the prefix
-        for(let i=0; i<subtitlesContent.length; i++){
-            for(let j=0; j<subtitlesContent.length; j++){
-                if(i!==j && subtitlesContent[i].text.startsWith(subtitlesContent[j].text)){
-                    subtitlesContent[j].text = subtitlesContent[i].text;
+                console.log("---->", name, oldText, text)
+
+                if(oldText === "" && text !== ""){
+                    subtitlesContent.push({name: name, text: text});
+                }else if(text !== ""){
+                    updateSubtitles({oldText, name, text});
                 }
             }
         }
-        // removing the duplicate subtitles
-        subtitlesContent = subtitlesContent.filter((subtitle, index) => {
-            return subtitlesContent.findIndex(sub => sub.text === subtitle.text) === index;
-        })
         
-        console.log(subtitlesContent);
+        console.log(JSON.stringify(subtitlesContent));
         updateDashboard()
     });
     observer.observe(subtitles, config);

@@ -18,7 +18,7 @@ const renderDashboard = () => {
         <div class="tab-container">
             <button class="tab-button" id="tab1">Captions</button>
             <button class="tab-button" id="tab2">Participants</button>
-            <button class="tab-button" id="tab3">Download</button>
+            <button class="tab-button" id="tab3">Analytics</button>
 
             <div id="tab1" class="tab active captions">
                 <h2>Live Captions</h2>
