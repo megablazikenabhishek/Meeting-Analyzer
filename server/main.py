@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, Response
 from flask_cors import CORS
 
 # importing required files
@@ -32,10 +32,18 @@ def summary():
 	try:
 		req = request.get_json()
 		data = req['data']
-		
+		ratio = int(req['ratio'])
+
+
 		# for summarization
 		text = "\n".join([f"{i['name']} : {i['text']}" for i in data])
-		summary_text = generateSummary(text)
+		
+		if(len(text)*(ratio/100)<=100):
+			return {'sucess': False, 'message': "Conversation is too small to generate a summary"}, 500
+		if(ratio < 15):
+			return {'sucess': False, 'message': "Very low percentage ratio"}, 500
+		
+		summary_text = generateSummary(text, ratio)
 
 		path = './file.pdf'
 		s = SummaryPDF()
