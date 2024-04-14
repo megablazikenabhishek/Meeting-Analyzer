@@ -1,10 +1,14 @@
 from flask import Flask, request, send_file, Response
 from flask_cors import CORS
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # importing required files
 from utils.cleanData import cleanData
-from utils.generatePDF import TranscriptPDF, SummaryPDF
+from utils.generatePDF import TranscriptPDF, SummaryPDF, DetailedAnalysis
 from utils.generateSummary import generateSummary
+from utils.detailedAnalysis import detailedAnalysis
 
 # intializing app
 app = Flask(__name__)
@@ -33,7 +37,6 @@ def summary():
 		req = request.get_json()
 		data = req['data']
 		ratio = int(req['ratio'])
-
 
 		# for summarization
 		text = "\n".join([f"{i['name']} : {i['text']}" for i in data])
@@ -66,6 +69,31 @@ def download_transcript():
 		path = './file.pdf'
 		t = TranscriptPDF()
 		t.draw("This is your Transcript", data)
+		t.save(path)
+
+		return send_file(path)
+	except Exception as e:
+		return {'sucess': False, 'message': str(e)}
+	
+@app.route('/detailedAnalysis', methods=['GET', 'POST'])
+def detailed_analysis():
+	try:
+		req = request.get_json()
+		data = req['data']
+
+		# for summarization
+		text = "\n".join([f"{i['name']} : {i['text']}" for i in data])
+		
+		if(len(text)<=100):
+			return {'sucess': False, 'message': "Conversation is too small to generate a summary"}, 500
+		
+		sentitment_report, analysis_report = detailedAnalysis(text)
+		# print(sentitment_report)
+		# print(analysis_report)
+		path = './file.pdf'
+		t = DetailedAnalysis()
+		t.drawSentimentReport(sentitment_report)
+		t.drawAnalysisReport(analysis_report)
 		t.save(path)
 
 		return send_file(path)

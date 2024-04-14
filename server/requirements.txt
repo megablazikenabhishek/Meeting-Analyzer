@@ -6,3 +6,5 @@ torchaudio
 scikit-learn
 reportlab
 flask-cors
+google-generativeai
+python-dotenv
