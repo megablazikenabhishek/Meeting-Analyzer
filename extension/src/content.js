@@ -5,7 +5,8 @@
 let subtitlesButton = null
 let subtitlesContent = []
 let ispaused = false;
-const backendUrl = "https://ideal-dollop-wqr5j7r795jf9x7w-5000.app.github.dev";
+let participantsButton = null
+let user_name = "You"
 
 // Global Functions
 const updateSubtitles = ({oldText, name, text}) =>{
@@ -38,6 +39,12 @@ const MergeSubtitles = () => {
         }
         result.push({name: curr_name, text: curr_text});
     }
+
+    // updating name
+    for(let i=0; i<result.length; i++){
+        if(result[i].name === "You")
+            result[i].name = user_name
+    }
     return result;
 }
 const updateDashboard = () => {
@@ -51,97 +58,10 @@ const updateDashboard = () => {
         <ul>
             ${result.map(subtitle => `<li><strong>${subtitle.name}</strong>: ${subtitle.text}</li>`).join('')}
         </ul>
-        <div style="text-align:center;">
-            <button class="sec-button pause-button">Pause</button>
-            <button class="sec-button download-button">Download</button>
-            <button class="sec-button summary-button">Summary</button>
-        </div>
     `;
     // auto scroll to the bottom of the dashboard
-    document.querySelector('.dashboard').scrollTop = dashboard.scrollHeight;
-
-    // Adding event listeners to pause and download buttons
-    document.querySelector('.pause-button').addEventListener('click', (e) => {
-        if(e.target.textContent === "Pause"){
-            e.target.textContent = "Play";
-            e.target.style.backgroundColor = "#ffcc00";
-            ispaused = true;
-            subtitlesButton.click();
-        }else{
-            e.target.textContent = "Pause";
-            e.target.style.backgroundColor = "red";
-            ispaused = false;
-            subtitlesButton.click();
-        }
-    }); 
-    
-    document.querySelector('.download-button').addEventListener('click', async(e) => {
-        try {
-            const result = MergeSubtitles();
-            const data = await fetch(`${backendUrl}/downloadTranscript`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({data: result})
-            });
-            const blob = await data.blob();
-
-            // Create a temporary URL for the Blob object
-            const url = URL.createObjectURL(blob);
-            
-            // Create a link element with the download attribute
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            
-            // Simulate a click on the link to trigger the download
-            document.body.appendChild(link);
-            link.click();
-
-            document.body.removeChild(link);
-            
-            // Clean up
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.log(error);
-        }
-    });
-
-    document.querySelector('.summary-button').addEventListener('click', async(e) => {
-        try {
-            const result = MergeSubtitles();
-            const data = await fetch(`${backendUrl}/generateSummary`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({data: result})
-            });
-            const blob = await data.blob();
-
-            // Create a temporary URL for the Blob object
-            const url = URL.createObjectURL(blob);
-            
-            // Create a link element with the download attribute
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            
-            // Simulate a click on the link to trigger the download
-            document.body.appendChild(link);
-            link.click();
-
-            document.body.removeChild(link);
-            
-            // Clean up
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.log(error);
-        }
-    });
+    if(document.querySelector(".minimize-button").textContent === '-')
+        document.querySelector('.dashboard').scrollTop = dashboard.scrollHeight;
 }
 
 const subtitlesHandler = () =>{
@@ -189,13 +109,25 @@ const subtitlesHandler = () =>{
 // Main Logic to start the subtitles
 const interval  = setInterval(() => {
     const foundDiv =  document.evaluate('//*[contains(text(), "Turn on captions")]', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE).snapshotItem(0);
+    const participantsFound = document.evaluate('//*[contains(text(), "Show everyone")]', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE).snapshotItem(0);
+
     if (foundDiv) {
         clearInterval(interval);
         const parent = foundDiv.parentElement;
         // getting the first child of the parent element
         subtitlesButton = parent.children[0];
+        participantsButton = participantsFound.parentElement.children[0];
         // console.log(subtitlesButton);
         subtitlesButton.click();
         subtitlesHandler();
+
+        participantsButton.click();
+        // getting participants info
+        setTimeout(() => {
+            console.log("Running Timeout..........")
+            participantsButton.click();
+            user_name = document.evaluate('//*[contains(text(), "(You)")]', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE).snapshotItem(0).previousSibling.textContent;
+            console.log(user_name)
+        }, 3500);
     }
 }, 1000)
